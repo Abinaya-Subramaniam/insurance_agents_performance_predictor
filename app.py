@@ -24,7 +24,6 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 
-# Set up Streamlit page
 st.set_page_config(
     page_title="Agent Performance Dashboard",
     page_icon="📊",
@@ -32,7 +31,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Load data function with caching
 @st.cache_data
 def load_data():
     try:
@@ -42,7 +40,6 @@ def load_data():
         st.error("File 'training_storming_round.csv' not found. Please upload it.")
         return None
 
-# Feature engineering function
 def create_features(df):
     df['months_since_joining'] = (df['year_month'] - df['agent_join_month']).dt.days / 30
     df['months_since_first_sale'] = (df['year_month'] - df['first_policy_sold_month']).dt.days / 30
@@ -57,7 +54,6 @@ def create_features(df):
     
     return df
 
-# Agent clustering function
 def categorize_agents(df):
     agent_stats = df.groupby('agent_code').agg({
         'new_policy_count': ['mean', 'std', 'count'],
@@ -106,7 +102,6 @@ def categorize_agents(df):
     
     return agent_stats
 
-# Prediction function
 def predict_one_nill(train_df):
     train_df = create_features(train_df)
     train_df = train_df.sort_values(['agent_code', 'year_month'])
@@ -170,7 +165,6 @@ def predict_one_nill(train_df):
     f2_scores = [fbeta_score(y_val, val_probs >= t, beta=2) for t in thresholds]
     optimal_threshold = thresholds[np.argmax(f2_scores)]
     
-    # Get feature importances
     try:
         num_features = numeric_features.tolist()
         
@@ -201,7 +195,6 @@ def predict_one_nill(train_df):
         'val_probs': val_probs
     }
 
-# Visualization functions
 def plot_univariate_analysis(df):
     st.subheader("Univariate Analysis")
     
@@ -307,42 +300,6 @@ def plot_temporal_analysis(df):
         fig.update_layout(height=600, title_text="Monthly Performance Trends")
         st.plotly_chart(fig, use_container_width=True)
 
-# def plot_cluster_analysis(agent_performance):
-#     st.subheader("Agent Performance Clustering")
-    
-#     cols = st.columns(2)
-#     with cols[0]:
-#         fig = px.scatter(agent_performance, x='avg_policies', y='avg_income',
-#                         color='performance', 
-#                         color_discrete_map={'High': 'green', 'Medium': 'orange', 'Low': 'red'},
-#                         hover_data=['agent_code', 'tenure'],
-#                         title="Agent Performance Clustering")
-#         st.plotly_chart(fig, use_container_width=True)
-    
-#     with cols[1]:
-#         fig = px.box(agent_performance, x='performance', y='avg_policies',
-#                     color='performance',
-#                     color_discrete_map={'High': 'green', 'Medium': 'orange', 'Low': 'red'},
-#                     title="Policy Distribution by Performance Group")
-#         st.plotly_chart(fig, use_container_width=True)
-    
-#     # TSNE visualization
-#     st.markdown("#### High-Dimensional Cluster Visualization")
-#     features = ['avg_policies', 'avg_anbp', 'avg_income', 'avg_customers', 'stability']
-#     tsne = TSNE(n_components=2, random_state=42)
-#     tsne_results = tsne.fit_transform(StandardScaler().fit_transform(agent_performance[features]))
-    
-#     tsne_df = pd.DataFrame({
-#         'tsne_1': tsne_results[:,0],
-#         'tsne_2': tsne_results[:,1],
-#         'performance': agent_performance['performance']
-#     })
-    
-#     fig = px.scatter(tsne_df, x='tsne_1', y='tsne_2', color='performance',
-#                     color_discrete_map={'High': 'green', 'Medium': 'orange', 'Low': 'red'},
-#                     title="t-SNE Visualization of Agent Clusters")
-#     st.plotly_chart(fig, use_container_width=True)
-
 
 def categorize_agents(df):
     """Categorize agents into High/Medium/Low performers with NaN handling"""
@@ -368,7 +325,6 @@ def categorize_agents(df):
         'year_month_max': 'last_active_month'
     })
     
-    # Reset index to keep agent_code as a column
     agent_stats = agent_stats.reset_index()
     
     agent_stats['tenure'] = ((agent_stats['last_active_month'] - agent_stats['first_active_month']).dt.days / 30).round()
@@ -415,8 +371,7 @@ def plot_cluster_analysis(agent_performance):
                     color_discrete_map={'High': 'green', 'Medium': 'orange', 'Low': 'red'},
                     title="Policy Distribution by Performance Group")
         st.plotly_chart(fig, use_container_width=True)
-    
-    # TSNE visualization
+
     st.markdown("#### High-Dimensional Cluster Visualization")
     features = ['avg_policies', 'avg_anbp', 'avg_income', 'avg_customers', 'stability']
     tsne = TSNE(n_components=2, random_state=42)
@@ -446,7 +401,6 @@ def plot_prediction_results(results):
     - Optimal Threshold: {results['optimal_threshold']:.4f}
     """)
     
-    # Confusion matrix
     y_pred = (results['val_probs'] >= results['optimal_threshold']).astype(int)
     cm = confusion_matrix(results['y_val'], y_pred)
     
@@ -456,8 +410,7 @@ def plot_prediction_results(results):
                    y=['Not One NILL', 'One NILL'],
                    title="Confusion Matrix")
     st.plotly_chart(fig, use_container_width=True)
-    
-    # Feature importance
+
     if not results['feature_importances'].empty:
         st.markdown("#### Top 20 Important Features")
         fig = px.bar(results['feature_importances'].head(20), 
@@ -465,16 +418,13 @@ def plot_prediction_results(results):
                     title="Feature Importance")
         st.plotly_chart(fig, use_container_width=True)
 
-# Main Streamlit app
 def main():
     st.title("📊 Agent Performance Analytics Dashboard")
     
-    # Load data
     train_df = load_data()
     if train_df is None:
         return
-    
-    # Sidebar filters
+
     st.sidebar.header("Filters")
     min_date = train_df['year_month'].min().to_pydatetime()
     max_date = train_df['year_month'].max().to_pydatetime()
@@ -491,7 +441,6 @@ def main():
         train_df = train_df[(train_df['year_month'] >= pd.to_datetime(start_date)) & 
                           (train_df['year_month'] <= pd.to_datetime(end_date))]
     
-    # Tabs for different sections
     tab1, tab2, tab3, tab4 = st.tabs(["Exploratory Analysis", "Performance Clustering", "One NILL Prediction", "Agent Insights"])
     
     with tab1:
@@ -506,7 +455,6 @@ def main():
         agent_performance = categorize_agents(train_df)
         plot_cluster_analysis(agent_performance)
         
-        # Show cluster statistics
         st.subheader("Cluster Statistics")
         cluster_stats = agent_performance.groupby('performance').agg({
             'avg_policies': ['mean', 'median', 'std'],
@@ -528,48 +476,253 @@ def main():
     
     with tab4:
         st.header("Agent Insights and Recommendations")
-        
         agent_performance = categorize_agents(train_df)
-        
-        # Top/bottom performers
+
+
         cols = st.columns(2)
-        with cols[0]:
-            st.subheader("Top Performers")
-            top_performers = agent_performance[agent_performance['performance'] == 'High'].sort_values('avg_policies', ascending=False).head(10)
-            st.dataframe(top_performers[['agent_code', 'avg_policies', 'avg_income', 'tenure']])
+    with cols[0]:
+        st.subheader("🏆 Top Performers")
+        top_performers = agent_performance[agent_performance['performance'] == 'High'].sort_values('avg_policies', ascending=False).head(10)
+        st.dataframe(
+            top_performers[['agent_code', 'avg_policies', 'avg_income', 'tenure']],
+            column_config={
+                "avg_policies": "Avg Policies",
+                "avg_income": "Avg Income",
+                "tenure": "Tenure (months)"
+            },
+            use_container_width=True,
+            hide_index=True
+        )
+    
+    with cols[1]:
+        st.subheader("⚠️ Bottom Performers")
+        bottom_performers = agent_performance[agent_performance['performance'] == 'Low'].sort_values('avg_policies').head(10)
+        st.dataframe(
+            bottom_performers[['agent_code', 'avg_policies', 'avg_income', 'tenure']],
+            column_config={
+                "avg_policies": "Avg Policies",
+                "avg_income": "Avg Income",
+                "tenure": "Tenure (months)"
+            },
+            use_container_width=True,
+            hide_index=True
+        )
+    
+    with st.expander("📋 Standard Intervention Strategies by Performance Level", expanded=True):
+        intervention_data = pd.DataFrame({
+            'Performance Level': ['High', 'Medium', 'Low'],
+            'Focus Area': [
+                "Advanced sales techniques, Leadership training",
+                "Product knowledge, Time management",
+                "Basic sales training, Motivation programs"
+            ],
+            'Recommended Actions': [
+                "Mentorship program, High-value client strategies",
+                "Weekly coaching sessions, Target setting",
+                "Daily check-ins, Performance improvement plan"
+            ],
+            'Success Metrics': [
+                "20% increase in ANBP, 15% more high-net-worth clients",
+                "10% increase in conversion rate, 5 more policies/month",
+                "Consistent policy sales, Regular activity reporting"
+            ]
+        })
         
-        with cols[1]:
-            st.subheader("Bottom Performers")
-            bottom_performers = agent_performance[agent_performance['performance'] == 'Low'].sort_values('avg_policies').head(10)
-            st.dataframe(bottom_performers[['agent_code', 'avg_policies', 'avg_income', 'tenure']])
+        st.dataframe(
+            intervention_data,
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "Performance Level": st.column_config.TextColumn(width="small"),
+                "Focus Area": st.column_config.TextColumn(width="medium"),
+                "Recommended Actions": st.column_config.TextColumn(width="medium"),
+                "Success Metrics": st.column_config.TextColumn(width="medium")
+            }
+        )
+    
+    with st.container():
+        st.markdown("#### ✏️ Create Custom Intervention Plan")
         
-        # Recommendations
-        st.subheader("Recommendations by Performance Group")
-        
+        with st.form(key='intervention_form'):
+            col1, col2 = st.columns(2)
+            with col1:
+                selected_intervention_agent = st.selectbox(
+                    "Select Agent",
+                    options=sorted(agent_performance['agent_code'].unique()),
+                    key="intervention_agent"
+                )
+                
+
+                agent_level = agent_performance.loc[
+                    agent_performance['agent_code'] == selected_intervention_agent,
+                    'performance'
+                ].values[0]
+                st.metric("Performance Level", agent_level)
+                
+                intervention_type = st.selectbox(
+                    "Intervention Type",
+                    options=["Training", "Coaching", "Incentive", "Performance Plan", "Other"],
+                    key="intervention_type"
+                )
+                
+            with col2:
+                start_date = st.date_input(
+                    "Start Date",
+                    key="intervention_start"
+                )
+                
+                end_date = st.date_input(
+                    "End Date",
+                    key="intervention_end"
+                )
+                
+                intervention_status = st.selectbox(
+                    "Status",
+                    options=["Planned", "In Progress", "Completed", "On Hold"],
+                    key="intervention_status"
+                )
+            
+            intervention_details = st.text_area(
+                "Intervention Details",
+                placeholder="Describe the intervention plan in detail...",
+                key="intervention_details"
+            )
+            
+            success_metrics = st.text_input(
+                "Success Metrics",
+                placeholder="How will you measure success?",
+                key="success_metrics"
+            )
+            
+            submitted = st.form_submit_button("💾 Save Intervention Plan")
+            
+            if submitted:
+                if start_date > end_date:
+                    st.error("End date must be after start date")
+                else:
+                    if 'interventions' not in st.session_state:
+                        st.session_state.interventions = []
+                        
+                    intervention_record = {
+                        'agent_code': selected_intervention_agent,
+                        'performance_level': agent_level,
+                        'intervention_type': intervention_type,
+                        'details': intervention_details,
+                        'start_date': start_date.strftime("%Y-%m-%d"),
+                        'end_date': end_date.strftime("%Y-%m-%d"),
+                        'success_metrics': success_metrics,
+                        'status': intervention_status,
+                        'created_date': datetime.now().strftime("%Y-%m-%d"),
+                        'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M")
+                    }
+                    st.session_state.interventions.append(intervention_record)
+                    st.success("Intervention plan saved successfully!")
+                    st.balloons()
+    
+    if 'interventions' in st.session_state and st.session_state.interventions:
+        with st.container():
+            st.markdown("#### 📊 Active Interventions")
+            
+            interventions_df = pd.DataFrame(st.session_state.interventions)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                status_filter = st.multiselect(
+                    "Filter by Status",
+                    options=interventions_df['status'].unique(),
+                    default=["Planned", "In Progress"],
+                    key="status_filter"
+                )
+            with col2:
+                performance_filter = st.multiselect(
+                    "Filter by Performance Level",
+                    options=interventions_df['performance_level'].unique(),
+                    default=interventions_df['performance_level'].unique(),
+                    key="performance_filter"
+                )
+            
+            filtered_interventions = interventions_df[
+                interventions_df['status'].isin(status_filter) & 
+                interventions_df['performance_level'].isin(performance_filter)
+            ].sort_values('start_date')
+            
+            if not filtered_interventions.empty:
+                st.dataframe(
+                    filtered_interventions,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_order=[
+                        'agent_code', 'performance_level', 'intervention_type',
+                        'status', 'start_date', 'end_date', 'details',
+                        'success_metrics', 'created_date', 'last_updated'
+                    ],
+                    column_config={
+                        "agent_code": "Agent",
+                        "performance_level": "Perf Level",
+                        "intervention_type": "Type",
+                        "start_date": st.column_config.DateColumn("Start Date"),
+                        "end_date": st.column_config.DateColumn("End Date"),
+                        "created_date": st.column_config.DateColumn("Created On"),
+                        "last_updated": "Last Updated"
+                    }
+                )
+                
+                with st.expander("🛠️ Manage Interventions"):
+                    selected_index = st.selectbox(
+                        "Select intervention to edit/delete",
+                        options=filtered_interventions.index,
+                        format_func=lambda x: f"{filtered_interventions.loc[x, 'agent_code']} - {filtered_interventions.loc[x, 'intervention_type']} ({filtered_interventions.loc[x, 'status']})"
+                    )
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("✏️ Edit Selected Intervention"):
+                            st.session_state.edit_intervention = selected_index
+                    with col2:
+                        if st.button("🗑️ Delete Selected Intervention"):
+                            st.session_state.interventions.pop(selected_index)
+                            st.rerun()
+                
+                st.download_button(
+                    label="📤 Export Interventions to CSV",
+                    data=filtered_interventions.to_csv(index=False).encode('utf-8'),
+                    file_name=f"agent_interventions_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime='text/csv'
+                )
+            else:
+                st.info("No interventions match your filters")
+    else:
+        st.info("ℹ️ No active interventions yet. Create your first intervention plan above.")
+    
+    with st.expander("💡 Performance Improvement Recommendations", expanded=True):
         high_rec = """
         **High Performers:**
-        - Reward and recognize top performers
-        - Consider leadership opportunities
-        - Gather best practices for training others
+        - Reward and recognize top performers with bonuses or awards
+        - Develop leadership skills through advanced training
+        - Assign as mentors to junior agents
+        - Focus on high-value client acquisition strategies
         """
         
         medium_rec = """
         **Medium Performers:**
-        - Provide targeted coaching
-        - Identify skill gaps through assessment
-        - Set clear performance goals
+        - Provide targeted coaching on specific skill gaps
+        - Implement weekly performance reviews
+        - Set clear, achievable monthly targets
+        - Offer product knowledge refresher courses
         """
         
         low_rec = """
-        **Low Performers:**
-        - Intensive training program
-        - Performance improvement plan
-        - Consider reassignment if no improvement
+        **🚨 Low Performers:**
+        - Implement intensive 30-day improvement plans
+        - Assign dedicated coach for daily check-ins
+        - Monitor activity metrics closely
+        - Consider reassignment if no improvement after 3 months
         """
         
         st.markdown(high_rec)
         st.markdown(medium_rec)
         st.markdown(low_rec)
 
+    
 if __name__ == "__main__":
     main()
