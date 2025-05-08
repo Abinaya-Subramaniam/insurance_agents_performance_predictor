@@ -7,3 +7,6 @@ seaborn
 lightgbm
 imbalanced-learn
 plotly
+statsmodels
+scipy>=1.7
+joblib>=1.0
