@@ -23,11 +23,11 @@ A significant proportion of insurance agents regularly fail to secure sales, res
 
 ## ✨ Key Features
 
-- 📊 **Exploratory Data Analysis**: Understand trends, distributions, and patterns in agent performance.
-- 🤖 **Predictive Modeling**: Robust ML models to identify at-risk agents.
-- 🔄 **Performance Clustering**: Segment agents into meaningful groups using unsupervised learning.
-- 💡 **Insightful Recommendations**: Personalized guidance for agent development.
-- 🖥 **Streamlit Dashboard**: Dynamic visual interface to interact with results and insights.
+-  **Exploratory Data Analysis**: Understand trends, distributions, and patterns in agent performance.
+-  **Predictive Modeling**: Robust ML models to identify at-risk agents.
+-  **Performance Clustering**: Segment agents into meaningful groups using unsupervised learning.
+-  **Insightful Recommendations**: Personalized guidance for agent development.
+-  **Streamlit Dashboard**: Dynamic visual interface to interact with results and insights.
 
 ---
 
